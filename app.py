@@ -7,7 +7,7 @@ app = Flask(__name__)
 # 💀🔥 FAKE DATABASE
 orders_db = {}
 
-# 1. THE STOREFRONT (Now with 2 columns: Company Name and Amount)
+# 1. THE STOREFRONT (2-Column dynamic design)
 @app.route('/')
 def index():
     return '''
@@ -43,19 +43,20 @@ def index():
 # 2. THE HANDSHAKE (Redirects to Gateway)
 @app.route('/checkout', methods=['POST'])
 def checkout():
-    # Dynamically grab both values from the new form
     amount = request.form.get('amount')
     raw_store_name = request.form.get('store_name')
     
-    # URL encode the store name just in case you type something with spaces (e.g. "My Cool Store")
+    # 💀🔥 URL Encode to prevent breakages!
     store_name = urllib.parse.quote(raw_store_name)
     
     txn_id = f"TXN_{uuid.uuid4().hex[:8].upper()}" 
     
     orders_db[txn_id] = "PENDING"
-    redirect_url = "https://gateway-test-m689.onrender.com/order-status" 
     
-    # Pass the dynamic store_name and amount to the frontend
+    # 💀🔥 URL Encode the redirect string too!
+    raw_redirect_url = "https://gateway-test-m689.onrender.com/order-status"
+    redirect_url = urllib.parse.quote(raw_redirect_url)
+    
     gateway_url = f"https://pay.techbittu.in/?store={store_name}&amount={amount}&txn={txn_id}&redirect_url={redirect_url}"
     return redirect(gateway_url)
 
