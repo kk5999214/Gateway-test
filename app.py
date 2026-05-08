@@ -1,13 +1,17 @@
 from flask import Flask, request, redirect, jsonify
+from flask_cors import CORS
 import uuid
 import urllib.parse
 
 app = Flask(__name__)
 
-# 💀🔥 FAKE DATABASE
+# 💀🔥 UNLOCK CROSS-ORIGIN REQUESTS (Allows your frontend to send the webhook)
+CORS(app)
+
+# FAKE DATABASE
 orders_db = {}
 
-# 1. THE STOREFRONT (2-Column dynamic design)
+# 1. THE STOREFRONT 
 @app.route('/')
 def index():
     return '''
@@ -40,27 +44,23 @@ def index():
         </html>
     '''
 
-# 2. THE HANDSHAKE (Redirects to Gateway)
+# 2. THE HANDSHAKE
 @app.route('/checkout', methods=['POST'])
 def checkout():
     amount = request.form.get('amount')
     raw_store_name = request.form.get('store_name')
-    
-    # 💀🔥 URL Encode to prevent breakages!
     store_name = urllib.parse.quote(raw_store_name)
     
     txn_id = f"TXN_{uuid.uuid4().hex[:8].upper()}" 
-    
     orders_db[txn_id] = "PENDING"
     
-    # 💀🔥 URL Encode the redirect string too!
     raw_redirect_url = "https://gateway-test-m689.onrender.com/order-status"
     redirect_url = urllib.parse.quote(raw_redirect_url)
     
     gateway_url = f"https://pay.techbittu.in/?store={store_name}&amount={amount}&txn={txn_id}&redirect_url={redirect_url}"
     return redirect(gateway_url)
 
-# 3. THE GHOST PROTOCOL (S2S Webhook Receiver)
+# 3. THE GHOST PROTOCOL (Webhook Receiver)
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
